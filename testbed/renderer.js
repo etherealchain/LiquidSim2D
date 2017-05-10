@@ -29,7 +29,7 @@ Renderer.prototype.setUnusedBuffer = function() {
     var i = this.waterIndex * 3;
     for (; i < this.maxVertices*3 ; i+=3) {
         this.waterPositions[i] = 0;
-        this.waterPositions[i+1] = 10;
+        this.waterPositions[i+1] = 0;
         this.waterPositions[i+2] = 0;
     }
 };
@@ -115,6 +115,10 @@ b2PolygonShape.prototype.draw = function(transform) {
 
     renderer.transformVerticesAndInsert(this.vertices, transform);
 };
+
+b2CircleShape.prototype.draw = function(transform){
+    
+}
 
 function drawParticleSystem(system) {
     var particles = system.GetPositionBuffer();

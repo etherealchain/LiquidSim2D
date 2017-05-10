@@ -24,8 +24,13 @@ var g_groundBody = null;
 
 var windowWidth = window.innerWidth;
 var windowHeight = window.innerHeight;
-
 var stats;
+
+var mouseJoint = null;
+var mouseTracing = false;
+var mouseTracerPos = new b2Vec2(0,0);
+var mouseTracerVel = new b2Vec2(0,0);
+var mouseWorldPos = new b2Vec2(0,0);
 
 function printErrorMsg(msg) {
   var domElement = document.createElement('div');
@@ -65,8 +70,6 @@ function initTestbed() {
 
   document.body.appendChild( this.threeRenderer.domElement);
 
-  this.mouseJoint = null;
-
   // hack
   renderer = new Renderer();
   var gravity = new b2Vec2(0, -10);
@@ -99,9 +102,16 @@ function Testbed(obj) {
   });
 
   document.addEventListener('mousedown', function(event) {
+    
     var p = getMouseCoords(event);
     var aabb = new b2AABB;
     var d = new b2Vec2;
+
+    mouseTracing = true;
+    mouseTracerPos = p;
+    mouseWorldPos = p;
+    mouseTracerVel.x = 0;
+    mouseTracerVel.y = 0; 
 
     d.Set(0.01, 0.01);
     b2Vec2.Sub(aabb.lowerBound, p, d);
@@ -111,14 +121,14 @@ function Testbed(obj) {
     world.QueryAABB(queryCallback, aabb);
 
     if (queryCallback.fixture) {
-      var body = queryCallback.fixture.body;
-      var md = new b2MouseJointDef;
-      md.bodyA = g_groundBody;
-      md.bodyB = body;
-      md.target = p;
-      md.maxForce = 1000 * body.GetMass();
-      that.mouseJoint = world.CreateJoint(md);
-      body.SetAwake(true);
+        var body = queryCallback.fixture.body;
+        var md = new b2MouseJointDef;
+        md.bodyA = g_groundBody;
+        md.bodyB = body;
+        md.target = p;
+        md.maxForce = 1000 * body.GetMass();
+        mouseJoint = world.CreateJoint(md);
+        body.SetAwake(true);
     }
     if (test.MouseDown !== undefined) {
       test.MouseDown(p);
@@ -128,8 +138,9 @@ function Testbed(obj) {
 
   document.addEventListener('mousemove', function(event) {
     var p = getMouseCoords(event);
-    if (that.mouseJoint) {
-      that.mouseJoint.SetTarget(p);
+    mouseWorldPos = p;
+    if (mouseJoint) {
+      mouseJoint.SetTarget(p);
     }
     if (test.MouseMove !== undefined) {
       test.MouseMove(p);
@@ -137,9 +148,10 @@ function Testbed(obj) {
   });
 
   document.addEventListener('mouseup', function(event) {
-    if (that.mouseJoint) {
-      world.DestroyJoint(that.mouseJoint);
-      that.mouseJoint = null;
+    mouseTracing = false;
+    if (mouseJoint) {
+      world.DestroyJoint(mouseJoint);
+      mouseJoint = null;
     }
     if (test.MouseUp !== undefined) {
       test.MouseUp(getMouseCoords(event));
@@ -148,9 +160,7 @@ function Testbed(obj) {
 
 
   window.addEventListener( 'resize', onWindowResize, false );
-
   testSwitch("waterSim");
-
   render();
 }
 
@@ -159,7 +169,7 @@ var render = function() {
   if (test.Step !== undefined) {
     test.Step();
   } else {
-    Step();
+    testBedStep();
   }
   stats.begin();
   renderer.draw();
@@ -187,27 +197,27 @@ var ResetWorld = function() {
   camera.position.z = 100;
 };
 
-var Step = function() {
-  world.Step(timeStep, velocityIterations, positionIterations);
+var testBedStep = function() {
+    world.Step(timeStep, velocityIterations, positionIterations);
 };
 
-/**@constructor*/
 function QueryCallback(point) {
-  this.point = point;
-  this.fixture = null;
+    this.point = point;
+    this.fixture = null;
 }
-
-/**@return bool*/
+QueryCallback.prototype.ReportParticle = function(system, index){
+    return false;
+}
 QueryCallback.prototype.ReportFixture = function(fixture) {
-  var body = fixture.body;
-  if (body.GetType() === b2_dynamicBody) {
-    var inside = fixture.TestPoint(this.point);
-    if (inside) {
-      this.fixture = fixture;
-      return true;
+    var body = fixture.body;
+    if (body.GetType() === b2_dynamicBody) {
+        var inside = fixture.TestPoint(this.point);
+        if (inside) {
+            this.fixture = fixture;
+            return true;
+        }
     }
-  }
-  return false;
+    return false;
 };
 
 function onWindowResize() {
