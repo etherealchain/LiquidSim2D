@@ -78,31 +78,15 @@ function initTestbed() {
 }
 
 function testSwitch(testName) {
-  ResetWorld();
-  world.SetGravity(new b2Vec2(0, -10));
-  var bd = new b2BodyDef;
-  g_groundBody = world.CreateBody(bd);
-  test = new window[testName];
+    ResetWorld();
+    world.SetGravity(new b2Vec2(0, -10));
+    var bd = new b2BodyDef;
+    g_groundBody = world.CreateBody(bd);
+    test = new window[testName];
 }
 
-function Testbed(obj) {
-  // Init world
-  //GenerateOffsets();
-  //Init
-  var that = this;
-  document.addEventListener('keypress', function(event) {
-    if (test.Keyboard !== undefined) {
-      test.Keyboard(String.fromCharCode(event.which) );
-    }
-  });
-  document.addEventListener('keyup', function(event) {
-    if (test.KeyboardUp !== undefined) {
-      test.KeyboardUp(String.fromCharCode(event.which) );
-    }
-  });
+function onPressDown(event){
 
-  document.addEventListener('mousedown', function(event) {
-    
     var p = getMouseCoords(event);
     var aabb = new b2AABB;
     var d = new b2Vec2;
@@ -131,32 +115,52 @@ function Testbed(obj) {
         body.SetAwake(true);
     }
     if (test.MouseDown !== undefined) {
-      test.MouseDown(p);
+        test.MouseDown(p);
     }
+}
 
-  });
-
-  document.addEventListener('mousemove', function(event) {
+function onDownMove(event){
     var p = getMouseCoords(event);
     mouseWorldPos = p;
     if (mouseJoint) {
-      mouseJoint.SetTarget(p);
+        mouseJoint.SetTarget(p);
     }
     if (test.MouseMove !== undefined) {
-      test.MouseMove(p);
+        test.MouseMove(p);
     }
-  });
-
-  document.addEventListener('mouseup', function(event) {
+}
+function onRiseUp(){
     mouseTracing = false;
     if (mouseJoint) {
-      world.DestroyJoint(mouseJoint);
-      mouseJoint = null;
+        world.DestroyJoint(mouseJoint);
+        mouseJoint = null;
     }
     if (test.MouseUp !== undefined) {
-      test.MouseUp(getMouseCoords(event));
+        test.MouseUp(getMouseCoords(event));
+    }
+}
+function Testbed(obj) {
+  // Init world
+  //GenerateOffsets();
+  //Init
+  var that = this;
+  document.addEventListener('keypress', function(event) {
+    if (test.Keyboard !== undefined) {
+      test.Keyboard(String.fromCharCode(event.which) );
     }
   });
+  document.addEventListener('keyup', function(event) {
+    if (test.KeyboardUp !== undefined) {
+      test.KeyboardUp(String.fromCharCode(event.which) );
+    }
+  });
+  document.addEventListener('touchstart', onPressDown);
+  document.addEventListener('touchmove', onDownMove);
+  document.addEventListener('touchend', onRiseUp);
+
+  document.addEventListener('mousedown', onPressDown);
+  document.addEventListener('mousemove', onDownMove);
+  document.addEventListener('mouseup', onRiseUp);
 
 
   window.addEventListener( 'resize', onWindowResize, false );

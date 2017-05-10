@@ -1,8 +1,8 @@
 
 function waterSim() {
 
-    camera.position.y = 0;
-    camera.position.z = 4;
+    camera.position.y = 1;
+    camera.position.z = 5;
 
     var bodyDefine = new b2BodyDef();
     var ground = world.CreateBody(bodyDefine);
@@ -116,17 +116,6 @@ waterQueryCallback.prototype.ReportParticle = function(system, index){
     let xf = new b2Transform();
     xf.SetIdentity();
     if(this.circleShape.TestPoint(xf, point)){
-        // array = this.particleSystem.GetVelocityBuffer();
-        // array[2*index] = this.velocity.x;
-        // array[2*index+1] = this.velocity.y;
-
-        // // write back
-        // // console.log(array.byteOffset);
-        // // console.log(array.length);
-        // // console.log(array.BYTES_PER_ELEMENT);
-        // let dataHeap = new Float32Array(Module.HEAPF32.buffer, array.byteOffset, array.length);
-        // // console.log(dataHeap.length);
-        // dataHeap.set(new Float32Array(array.buffer, 0, array.length));
         this.particleSystem.SetVelocityBuffer(index, this.velocity.x, this.velocity.y);
     }
     return true;
