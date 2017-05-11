@@ -40,41 +40,41 @@ function printErrorMsg(msg) {
 }
 
 function initTestbed() {
-  stats = new Stats();
+    stats = new Stats();
 	document.body.appendChild(stats.dom);
 
-  camera = new THREE.PerspectiveCamera(70
-    , windowWidth / windowHeight
-    , 1, 1000);
+    camera = new THREE.PerspectiveCamera(70
+        , windowWidth / windowHeight
+        , 1, 1000);
 
-  try {
-    threeRenderer = new THREE.WebGLRenderer();
-  } catch( error ) {
-    printErrorMsg('<p>Sorry, your browser does not support WebGL.</p>'
-                + '<p>This testbed application uses WebGL to quickly draw'
-                + ' LiquidFun particles.</p>'
-                + '<p>LiquidFun can be used without WebGL, but unfortunately'
-                + ' this testbed cannot.</p>'
-                + '<p>Have a great day!</p>');
-    return;
-  }
+    try {
+        threeRenderer = new THREE.WebGLRenderer();
+    } catch( error ) {
+        printErrorMsg('<p>Sorry, your browser does not support WebGL.</p>'
+                    + '<p>This testbed application uses WebGL to quickly draw'
+                    + ' LiquidFun particles.</p>'
+                    + '<p>LiquidFun can be used without WebGL, but unfortunately'
+                    + ' this testbed cannot.</p>'
+                    + '<p>Have a great day!</p>');
+        return;
+    }
 
-  threeRenderer.setClearColor(0xEEEEEE);
-  threeRenderer.setSize(windowWidth, windowHeight);
+    threeRenderer.setClearColor(0xEEEEEE);
+    threeRenderer.setSize(windowWidth, windowHeight);
 
-  camera.position.x = 0;
-  camera.position.y = 0;
-  camera.position.z = 100;
-  scene = new THREE.Scene();
-  camera.lookAt(scene.position);
+    camera.position.x = 0;
+    camera.position.y = 0;
+    camera.position.z = 100;
+    scene = new THREE.Scene();
+    camera.lookAt(scene.position);
 
-  document.body.appendChild( this.threeRenderer.domElement);
+    document.body.appendChild( this.threeRenderer.domElement);
 
-  // hack
-  renderer = new Renderer();
-  var gravity = new b2Vec2(0, -10);
-  world = new b2World(gravity);
-  Testbed();
+    // hack
+    renderer = new Renderer();
+    var gravity = new b2Vec2(0, -10);
+    world = new b2World(gravity);
+    Testbed();
 }
 
 function testSwitch(testName) {
@@ -85,9 +85,8 @@ function testSwitch(testName) {
     test = new window[testName];
 }
 
-function onPressDown(event){
+function onPressDown(p){
 
-    var p = getMouseCoords(event);
     var aabb = new b2AABB;
     var d = new b2Vec2;
 
@@ -119,8 +118,8 @@ function onPressDown(event){
     }
 }
 
-function onDownMove(event){
-    var p = getMouseCoords(event);
+function onDownMove(p){
+
     mouseWorldPos = p;
     if (mouseJoint) {
         mouseJoint.SetTarget(p);
@@ -129,14 +128,14 @@ function onDownMove(event){
         test.MouseMove(p);
     }
 }
-function onRiseUp(){
+function onRiseUp(p){
     mouseTracing = false;
     if (mouseJoint) {
         world.DestroyJoint(mouseJoint);
         mouseJoint = null;
     }
     if (test.MouseUp !== undefined) {
-        test.MouseUp(getMouseCoords(event));
+        test.MouseUp(p);
     }
 }
 function Testbed(obj) {
@@ -154,13 +153,13 @@ function Testbed(obj) {
       test.KeyboardUp(String.fromCharCode(event.which) );
     }
   });
-  document.addEventListener('touchstart', onPressDown);
-  document.addEventListener('touchmove', onDownMove);
-  document.addEventListener('touchend', onRiseUp);
+  document.addEventListener('touchstart', touchStart);
+  document.addEventListener('touchmove', touchMove);
+  document.addEventListener('touchend', touchEnd);
 
-  document.addEventListener('mousedown', onPressDown);
-  document.addEventListener('mousemove', onDownMove);
-  document.addEventListener('mouseup', onRiseUp);
+  document.addEventListener('mousedown', mouseStart);
+  document.addEventListener('mousemove', mouseMove);
+  document.addEventListener('mouseup', mouseEnd);
 
 
   window.addEventListener( 'resize', onWindowResize, false );
@@ -225,15 +224,41 @@ QueryCallback.prototype.ReportFixture = function(fixture) {
 };
 
 function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  threeRenderer.setSize( window.innerWidth, window.innerHeight );
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    threeRenderer.setSize( window.innerWidth, window.innerHeight );
 }
 
-function getMouseCoords(event) {
+function mouseStart(event){
+    let point = getWorldCoords(event.clientX, event.clientY);
+    onPressDown(point);
+}
+function mouseMove(event){
+    let point = getWorldCoords(event.clientX, event.clientY);
+    onDownMove(point);
+}
+function mouseEnd(event){
+    let point = getWorldCoords(event.clientX, event.clientY);
+    onRiseUp(point);
+}
+
+function touchStart(event){
+    let point = getWorldCoords(event.touches[0].pageX, event.touches[0].pageY);
+    onPressDown(point);
+}
+function touchMove(event){
+    let point = getWorldCoords(event.touches[0].pageX, event.touches[0].pageY);
+    onDownMove(point);
+}
+function touchEnd(event){
+    let point = getWorldCoords(event.touches[0].pageX, event.touches[0].pageY);
+    onRiseUp(point);
+}
+
+function getWorldCoords(x,y) {
     var mouse = new THREE.Vector3();
-    mouse.x = (event.clientX / windowWidth) * 2 - 1;
-    mouse.y = -(event.clientY / windowHeight) * 2 + 1;
+    mouse.x = (x / windowWidth) * 2 - 1;
+    mouse.y = -(y / windowHeight) * 2 + 1;
     mouse.z = 0.5;
 
     mouse.unproject(camera);
