@@ -253,6 +253,7 @@ function touchMove(event){
     onDownMove(point);
 }
 function touchEnd(event){
+    event.preventDefault();
     let point = getWorldCoords(event.touches[0].pageX, event.touches[0].pageY);
     onRiseUp(point);
 }
