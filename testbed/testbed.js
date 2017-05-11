@@ -255,7 +255,9 @@ function touchMove(event){
     onDownMove(point);
 }
 function touchEnd(event){
-    let point = getWorldCoords(event.touches[0].pageX, event.touches[0].pageY);
+    event.preventDefault();
+    event.stopPropagation();
+    let point = getWorldCoords(event.changedTouches[0].pageX, event.changedTouches[0].pageY);
     onRiseUp(point);
 }
 
