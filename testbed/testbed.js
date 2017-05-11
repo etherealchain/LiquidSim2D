@@ -244,19 +244,16 @@ function mouseEnd(event){
 
 function touchStart(event){
     event.preventDefault();
-    event.stopPropagation();
     let point = getWorldCoords(event.touches[0].pageX, event.touches[0].pageY);
     onPressDown(point);
 }
 function touchMove(event){
     event.preventDefault();
-    event.stopPropagation();
     let point = getWorldCoords(event.touches[0].pageX, event.touches[0].pageY);
     onDownMove(point);
 }
 function touchEnd(event){
     event.preventDefault();
-    event.stopPropagation();
     let point = getWorldCoords(event.changedTouches[0].pageX, event.changedTouches[0].pageY);
     onRiseUp(point);
 }
