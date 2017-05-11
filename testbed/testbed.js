@@ -153,9 +153,9 @@ function Testbed(obj) {
       test.KeyboardUp(String.fromCharCode(event.which) );
     }
   });
-  document.addEventListener('touchstart', touchStart);
-  document.addEventListener('touchmove', touchMove);
-  document.addEventListener('touchend', touchEnd);
+  document.addEventListener('touchstart', touchStart, {passive: false});
+  document.addEventListener('touchmove', touchMove, {passive: false});
+  document.addEventListener('touchend', touchEnd, {passive: false});
 
   document.addEventListener('mousedown', mouseStart);
   document.addEventListener('mousemove', mouseMove);
