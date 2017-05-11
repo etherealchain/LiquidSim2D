@@ -14,7 +14,14 @@
     <script src="testbed/testbed.js"></script>
     <script src="testbed/utils.js"></script>
 
-    <body onload="initTestbed()">
+    <script >
+        Module['onRuntimeInitialized'] = function() {
+            initTestbed(); 
+        };
+        
+    </script>
+
+    <body>
        
         <!--<script src="https://threejs.org/examples/js/Detector.js"></script> -->
         <script src="https://threejs.org/examples/js/libs/stats.min.js"></script>
