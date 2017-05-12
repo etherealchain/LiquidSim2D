@@ -39,6 +39,7 @@ function waterSim() {
     this.produceInterval = 1000;
     this.lastTimeStamp = 0;
     this.mouseTracing = false;
+    this.waterColor = new b2ParticleColor(0x29, 0xA6, 0xEE, 0xff);
 }
 
 waterSim.prototype.Step = function(){
@@ -95,6 +96,7 @@ waterSim.prototype.createDrop = function(){
     pd.shape = circle;
     pd.flags = 0;
     pd.groupFlags = 0;
+    pd.color = this.waterColor;
 
     this.particleSystem.CreateParticleGroup(pd);
 }

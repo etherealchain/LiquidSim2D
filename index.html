@@ -8,26 +8,100 @@
     </head>
 
     <script src="liquidfun.js"></script>
+
+    
+
     <!-- testbed code !-->
     <script src="testbed/renderer.js"></script>
     <script src="testbed/three.min.js"></script>
     <script src="testbed/testbed.js"></script>
     <script src="testbed/utils.js"></script>
+    <!--<script src="https://threejs.org/examples/js/Detector.js"></script> -->
+    <script src="https://threejs.org/examples/js/libs/stats.min.js"></script>
+    <!--<script src="https://threejs.org/examples/js/libs/dat.gui.min.js"></script>-->
+
+    <script src="waterSim.js"></script>
 
     <script >
         Module['onRuntimeInitialized'] = function() {
             initTestbed(); 
         };
-        
     </script>
 
-    <body>
-       
-        <!--<script src="https://threejs.org/examples/js/Detector.js"></script> -->
-        <script src="https://threejs.org/examples/js/libs/stats.min.js"></script>
-        <!--<script src="https://threejs.org/examples/js/libs/dat.gui.min.js"></script>-->
+    <body></body>
 
-        <script src="waterSim.js"></script>
-        
-    </body>
+    <script type="x-shader/x-vertex" id="vertexShader">
+        uniform float size;
+        uniform float scale;
+        varying vec4 pos;
+
+        #include <common>
+        #include <color_pars_vertex>
+        #include <fog_pars_vertex>
+        #include <shadowmap_pars_vertex>
+        #include <logdepthbuf_pars_vertex>
+        #include <clipping_planes_pars_vertex>
+
+        void main() {
+            #include <color_vertex>
+            #include <begin_vertex>
+            #include <project_vertex>
+
+            #ifdef USE_SIZEATTENUATION
+                gl_PointSize = size * ( scale / - mvPosition.z );
+            #else
+                gl_PointSize = size;
+            #endif
+
+            #include <logdepthbuf_vertex>
+            #include <clipping_planes_vertex>
+            #include <worldpos_vertex>
+            #include <shadowmap_vertex>
+            #include <fog_vertex>
+
+            pos = modelMatrix * vec4( transformed, 1.0 );
+        }
+    </script>
+    <script type="x-shader/x-fragment" id="fragmentShader">
+        uniform vec3 diffuse;
+        uniform float opacity;
+        varying vec4 pos;
+
+        #include <common>
+        #include <packing>
+        #include <color_pars_fragment>
+        #include <map_particle_pars_fragment>
+        #include <fog_pars_fragment>
+        #include <shadowmap_pars_fragment>
+        #include <logdepthbuf_pars_fragment>
+        #include <clipping_planes_pars_fragment>
+
+        void main() {
+
+            #include <clipping_planes_fragment>
+
+            vec3 outgoingLight = vec3( 0.0 );
+            vec4 diffuseColor = vec4( diffuse, opacity );
+
+            #include <logdepthbuf_fragment>
+            #include <map_particle_fragment>
+            #include <color_fragment>
+            #include <alphatest_fragment>
+
+            vec2 coord = gl_PointCoord - vec2(0.5);
+            vec4 origin = vec4(0,0,0,1);
+
+            // discard edge fragment and unused point 
+            if((length(coord) > 0.5) || pos == origin)
+                discard;
+            
+            outgoingLight = diffuseColor.rgb;
+            gl_FragColor = vec4( outgoingLight, diffuseColor.a );
+
+            #include <premultiplied_alpha_fragment>
+            #include <tonemapping_fragment>
+            #include <encodings_fragment>
+            #include <fog_fragment>
+        }
+    </script>
 </html>
