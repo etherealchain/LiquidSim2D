@@ -179,7 +179,7 @@ var render = function() {
         testBedStep();
     }
     renderer.draw();
-    threeRenderer.render(scene, camera, null, false);
+    threeRenderer.render(scene, camera);
     
     stats.update();
     requestAnimationFrame(render);

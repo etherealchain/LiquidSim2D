@@ -75,8 +75,6 @@ Renderer.prototype.resetBuffer = function() {
     }
 };
 
-
-
 Renderer.prototype.draw = function() {
 
     this.waterIndex = 0;
@@ -87,13 +85,8 @@ Renderer.prototype.draw = function() {
     for (var i = 0; i < world.particleSystems.length; i++) {
         drawParticleSystem(world.particleSystems[i]);
     }
-    
-    this.waterPoints.geometry.attributes.position.needsUpdate = true;
-    this.waterPoints.geometry.attributes.color.needsUpdate = true;
-    
-    
-    this.composer.render();
 
+    // draw box
     for (var i = 0, max = world.bodies.length; i < max; i++) {
         var body = world.bodies[i];
         var maxFixtures = body.fixtures.length;
@@ -104,8 +97,11 @@ Renderer.prototype.draw = function() {
         }
     }
 
+    this.waterPoints.geometry.attributes.position.needsUpdate = true;
+    this.waterPoints.geometry.attributes.color.needsUpdate = true;
     this.boxMesh.geometry.attributes.position.needsUpdate = true;
-    
+        
+    this.composer.render();
 };
 
 Renderer.prototype.insertParticleVertices = function(x, y, r, g, b) {
