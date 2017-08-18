@@ -1,5 +1,5 @@
-# liquidFunTest
+# liquidSim
 
-Playing Box2D with JavaScript
+Liquid simulation with Box2D engine
 
 [LiquidFun](http://google.github.io/liquidfun/)
