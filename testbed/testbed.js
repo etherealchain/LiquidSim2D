@@ -59,8 +59,9 @@ function initTestbed() {
         return;
     }
 
-    threeRenderer.setClearColor(0xEEEEEE);
+    threeRenderer.setClearColor(0x000000);
     threeRenderer.setSize(windowWidth, windowHeight);
+    threeRenderer.autoClear = false;
 
     camera.position.x = 0;
     camera.position.y = 0;
@@ -139,46 +140,49 @@ function onRiseUp(p){
     }
 }
 function Testbed(obj) {
-  // Init world
-  //GenerateOffsets();
-  //Init
-  var that = this;
-  document.addEventListener('keypress', function(event) {
-    if (test.Keyboard !== undefined) {
-      test.Keyboard(String.fromCharCode(event.which) );
-    }
-  });
-  document.addEventListener('keyup', function(event) {
-    if (test.KeyboardUp !== undefined) {
-      test.KeyboardUp(String.fromCharCode(event.which) );
-    }
-  });
-  document.addEventListener('touchstart', touchStart, {passive: false});
-  document.addEventListener('touchmove', touchMove, {passive: false});
-  document.addEventListener('touchend', touchEnd, {passive: false});
+    // Init world
+    //GenerateOffsets();
+    //Init
+    var that = this;
+    document.addEventListener('keypress', function(event) {
+        if (test.Keyboard !== undefined) {
+        test.Keyboard(String.fromCharCode(event.which) );
+        }
+    });
+    document.addEventListener('keyup', function(event) {
+        if (test.KeyboardUp !== undefined) {
+        test.KeyboardUp(String.fromCharCode(event.which) );
+        }
+    });
+    document.addEventListener('touchstart', touchStart, {passive: false});
+    document.addEventListener('touchmove', touchMove, {passive: false});
+    document.addEventListener('touchend', touchEnd, {passive: false});
 
-  document.addEventListener('mousedown', mouseStart);
-  document.addEventListener('mousemove', mouseMove);
-  document.addEventListener('mouseup', mouseEnd);
+    document.addEventListener('mousedown', mouseStart);
+    document.addEventListener('mousemove', mouseMove);
+    document.addEventListener('mouseup', mouseEnd);
 
 
-  window.addEventListener( 'resize', onWindowResize, false );
-  testSwitch("waterSim");
-  render();
+    window.addEventListener( 'resize', onWindowResize, false );
+    testSwitch("waterSim");
+    render();
 }
 
 var render = function() {
-  // bring objects into world
-  if (test.Step !== undefined) {
-    test.Step();
-  } else {
-    testBedStep();
-  }
-  stats.begin();
-  renderer.draw();
-  threeRenderer.render(scene, camera);
-  stats.end();
-  requestAnimationFrame(render);
+    threeRenderer.clear();
+    
+    // bring objects into world
+    if (test.Step !== undefined) {
+        test.Step();
+    } 
+    else {
+        testBedStep();
+    }
+    renderer.draw();
+    threeRenderer.render(scene, camera, null, false);
+    
+    stats.update();
+    requestAnimationFrame(render);
 };
 
 var ResetWorld = function() {

@@ -19,9 +19,16 @@
     
     <script src="lib/Detector.js"></script> 
     <script src="lib/stats.min.js"></script>
-    <!--<script src="https://threejs.org/examples/js/libs/dat.gui.min.js"></script>-->
+    <script src="lib/CopyShader.js"></script>
+    <script src="lib/EffectComposer.js"></script>
+    <script src="lib/RenderPass.js"></script>
+    <script src="lib/ShaderPass.js"></script>
 
+    <script src="WaterPass.js"></script>
+    <script src="blurShader.js"></script>
+    <script src="threShader.js"></script>
     <script src="waterSim.js"></script>
+    
 
     <script >
         Module['onRuntimeInitialized'] = function() {
@@ -30,6 +37,24 @@
     </script>
 
     <body></body>
+
+    <script id="debugVS" type="x-shader/x-vertex">
+        varying vec2 vUv;
+        void main()
+        {
+            vUv = uv;
+            gl_Position =  projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    </script>
+    <script id="debugFS" type="x-shader/x-fragment">
+        uniform sampler2D tex;
+        varying vec2 vUv;
+        void main()
+        {
+            vec4 color = texture2D(tex,vUv);
+            gl_FragColor = color;
+        }
+    </script>
 
     <script type="x-shader/x-vertex" id="vertexShader">
         uniform float size;

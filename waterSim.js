@@ -39,7 +39,7 @@ function waterSim() {
     this.produceInterval = 1000;
     this.lastTimeStamp = 0;
     this.mouseTracing = false;
-    this.waterColor = new b2ParticleColor(0x29, 0xA6, 0xEE, 0xff);
+    this.waterColor = new b2ParticleColor(0xff, 0xff, 0xff, 0xff);
 }
 
 waterSim.prototype.Step = function(){

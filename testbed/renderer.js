@@ -1,7 +1,23 @@
 var inv255 = .003921569;
-let numOfBox = 3;
+var numOfBox = 3;
+var textureSize = 1024;
 
 function Renderer() {
+
+    let waterScene = new THREE.Scene();
+    // composer
+    this.composer = new THREE.EffectComposer(threeRenderer);
+    
+    let renderPass = new THREE.RenderPass(waterScene, camera);
+    let waterPass = new WaterPass(new THREE.Vector2(windowWidth,windowHeight));
+    let copyPass = new THREE.ShaderPass(THREE.CopyShader);
+	copyPass.renderToScreen = true;
+    // this.colorPass = new THREE.ShaderPass();
+
+    this.composer.addPass(renderPass);
+    this.composer.addPass(waterPass);
+    // this.composer.addPass(copyPass);
+
     // water mesh
     this.maxVertices = 10000;
     this.waterPositions = new Float32Array(this.maxVertices*3);
@@ -33,8 +49,22 @@ function Renderer() {
     boxGeometry.addAttribute('position', new THREE.BufferAttribute( this.boxPositions, 3 ));
     this.boxMesh = new THREE.Mesh(boxGeometry, new THREE.MeshBasicMaterial( { color: 0x8C5C10 } ));
 
+    // hud
+    this.hud = new THREE.WebGLRenderTarget( textureSize, textureSize, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat } );
+    let plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(4,1,1,1),new THREE.MeshBasicMaterial({color:0xffffff, map:this.composer.readBuffer.texture}) );
+    plane.position.set(0,1,-1);
+    // this.plane = new THREE.Mesh(
+    //     new THREE.PlaneBufferGeometry(2,2,1,1), 
+    //     new THREE.ShaderMaterial( {
+    //         uniforms: {"tex":{value:null}},
+    //         vertexShader: document.getElementById( 'debugVS' ).textContent,
+    //         fragmentShader: document.getElementById( 'debugFS' ).textContent
+    //     } ));
+    // this.plane.material.uniforms["tex"].value = this.debug.texture;
+
+
     scene.add(this.boxMesh);
-    scene.add(this.waterPoints);
+    waterScene.add(this.waterPoints);
 }
 
 Renderer.prototype.resetBuffer = function() {
@@ -45,11 +75,24 @@ Renderer.prototype.resetBuffer = function() {
     }
 };
 
+
+
 Renderer.prototype.draw = function() {
 
     this.waterIndex = 0;
     this.boxIndex = 0;
     this.resetBuffer();
+
+    // draw particle systems
+    for (var i = 0; i < world.particleSystems.length; i++) {
+        drawParticleSystem(world.particleSystems[i]);
+    }
+    
+    this.waterPoints.geometry.attributes.position.needsUpdate = true;
+    this.waterPoints.geometry.attributes.color.needsUpdate = true;
+    
+    
+    this.composer.render();
 
     for (var i = 0, max = world.bodies.length; i < max; i++) {
         var body = world.bodies[i];
@@ -61,15 +104,8 @@ Renderer.prototype.draw = function() {
         }
     }
 
-    // draw particle systems
-    for (var i = 0; i < world.particleSystems.length; i++) {
-        drawParticleSystem(world.particleSystems[i]);
-    }
-
-    this.waterPoints.geometry.attributes.position.needsUpdate = true;
-    this.waterPoints.geometry.attributes.color.needsUpdate = true;
-
     this.boxMesh.geometry.attributes.position.needsUpdate = true;
+    
 };
 
 Renderer.prototype.insertParticleVertices = function(x, y, r, g, b) {
