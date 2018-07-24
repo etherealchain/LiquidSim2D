@@ -1,4 +1,4 @@
-# liquidSim
+# LiquidSim2D
 
 Liquid simulation with Box2D engine
 
