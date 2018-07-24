@@ -4,7 +4,7 @@
  * Full-screen textured quad shader
  */
 
-THREE.CopyShader = {
+var CopyShader = {
 
 	uniforms: {
 
@@ -44,3 +44,4 @@ THREE.CopyShader = {
 	].join( "\n" )
 
 };
+export default CopyShader;

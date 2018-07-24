@@ -1,6 +1,11 @@
-WaterPass = function(resolution){
+import * as THREE from 'three';
+import Pass from './lib/Pass';
+import blurShader from './blurShader';
+import threShader from './threShader';
 
-    THREE.Pass.call( this );
+function WaterPass(resolution){
+
+    Pass.call( this );
 
     let pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat };
     this.waterTargetH = new THREE.WebGLRenderTarget( resolution.x/2, resolution.y/2, pars );
@@ -31,7 +36,7 @@ WaterPass = function(resolution){
     this.needsSwap = false;
 };
 
-WaterPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
+WaterPass.prototype = Object.assign( Object.create( Pass.prototype ), {
     
     constructor: WaterPass,
 
@@ -54,3 +59,4 @@ WaterPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
     }
 
 });
+export default WaterPass;

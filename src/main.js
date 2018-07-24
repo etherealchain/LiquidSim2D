@@ -1,3 +1,10 @@
+import * as THREE from 'three';
+// import Stats from 'stats.js';
+import ParticleRenderer from './ParticleRenderer';
+import MouseQueryCallback from './MouseQueryCallback';
+import WaterSim from './WaterSim';
+
+
 // shouldnt be a global :(
 var particleColors = [
   new b2ParticleColor(0xff, 0x00, 0x00, 0xff), // red
@@ -9,28 +16,18 @@ var particleColors = [
   new b2ParticleColor(0xff, 0xd7, 0x00, 0xff), // gold
   new b2ParticleColor(0x00, 0xff, 0xff, 0xff) // cyan
 ];
-var container;
-var world = null;
+
 var threeRenderer;
-var renderer;
+var particleRenderer;
 var camera;
 var scene;
-var objects = [];
-var timeStep = 1.0 / 60.0;
-var velocityIterations = 8;
-var positionIterations = 3;
-var test = {};
+var simulator;
 var g_groundBody = null;
+// var stats;
 
-var windowWidth = window.innerWidth;
-var windowHeight = window.innerHeight;
-var stats;
-
-var mouseJoint = null;
-var mouseTracing = false;
-var mouseTracerPos = new b2Vec2(0,0);
-var mouseTracerVel = new b2Vec2(0,0);
-var mouseWorldPos = new b2Vec2(0,0);
+b2PolygonShape.prototype.draw = function(transform) {
+    particleRenderer.transformVerticesAndInsert(this.vertices, transform);
+};
 
 function printErrorMsg(msg) {
   var domElement = document.createElement('div');
@@ -39,12 +36,13 @@ function printErrorMsg(msg) {
   document.body.appendChild(domElement);
 }
 
-function initTestbed() {
-    stats = new Stats();
-	document.body.appendChild(stats.dom);
+function initAll() {
+    // stats = new Stats();
+    // stats.showPanel(0);
+	// document.body.appendChild(stats.dom);
 
     camera = new THREE.PerspectiveCamera(70
-        , windowWidth / windowHeight
+        , window.innerWidth / window.innerHeight
         , 1, 1000);
 
     try {
@@ -60,7 +58,7 @@ function initTestbed() {
     }
 
     threeRenderer.setClearColor(0x000000);
-    threeRenderer.setSize(windowWidth, windowHeight);
+    threeRenderer.setSize(window.innerWidth, window.innerHeight);
     threeRenderer.autoClear = false;
 
     camera.position.x = 0;
@@ -69,21 +67,21 @@ function initTestbed() {
     scene = new THREE.Scene();
     camera.lookAt(scene.position);
 
-    document.body.appendChild( this.threeRenderer.domElement);
+    document.body.appendChild( threeRenderer.domElement);
 
     // hack
-    renderer = new Renderer();
     var gravity = new b2Vec2(0, -10);
     world = new b2World(gravity);
+    particleRenderer = new ParticleRenderer(threeRenderer, camera, scene, world);
     Testbed();
 }
 
-function testSwitch(testName) {
+function testSwitch() {
     ResetWorld();
     world.SetGravity(new b2Vec2(0, -10));
     var bd = new b2BodyDef;
     g_groundBody = world.CreateBody(bd);
-    test = new window[testName];
+    simulator = new WaterSim(camera);
 }
 
 function onPressDown(p){
@@ -101,7 +99,7 @@ function onPressDown(p){
     b2Vec2.Sub(aabb.lowerBound, p, d);
     b2Vec2.Add(aabb.upperBound, p, d);
 
-    var queryCallback = new QueryCallback(p);
+    var queryCallback = new MouseQueryCallback(p);
     world.QueryAABB(queryCallback, aabb);
 
     if (queryCallback.fixture) {
@@ -114,8 +112,8 @@ function onPressDown(p){
         mouseJoint = world.CreateJoint(md);
         body.SetAwake(true);
     }
-    if (test.MouseDown !== undefined) {
-        test.MouseDown(p);
+    if (simulator.MouseDown !== undefined) {
+        simulator.MouseDown(p);
     }
 }
 
@@ -125,8 +123,8 @@ function onDownMove(p){
     if (mouseJoint) {
         mouseJoint.SetTarget(p);
     }
-    if (test.MouseMove !== undefined) {
-        test.MouseMove(p);
+    if (simulator.MouseMove !== undefined) {
+        simulator.MouseMove(p);
     }
 }
 function onRiseUp(p){
@@ -135,8 +133,8 @@ function onRiseUp(p){
         world.DestroyJoint(mouseJoint);
         mouseJoint = null;
     }
-    if (test.MouseUp !== undefined) {
-        test.MouseUp(p);
+    if (simulator.MouseUp !== undefined) {
+        simulator.MouseUp(p);
     }
 }
 function Testbed(obj) {
@@ -145,13 +143,13 @@ function Testbed(obj) {
     //Init
     var that = this;
     document.addEventListener('keypress', function(event) {
-        if (test.Keyboard !== undefined) {
-        test.Keyboard(String.fromCharCode(event.which) );
+        if (simulator.Keyboard !== undefined) {
+            simulator.Keyboard(String.fromCharCode(event.which) );
         }
     });
     document.addEventListener('keyup', function(event) {
-        if (test.KeyboardUp !== undefined) {
-        test.KeyboardUp(String.fromCharCode(event.which) );
+        if (simulator.KeyboardUp !== undefined) {
+            simulator.KeyboardUp(String.fromCharCode(event.which) );
         }
     });
     document.addEventListener('touchstart', touchStart, {passive: false});
@@ -164,28 +162,28 @@ function Testbed(obj) {
 
 
     window.addEventListener( 'resize', onWindowResize, false );
-    testSwitch("waterSim");
+    testSwitch();
     render();
 }
 
-var render = function() {
+function render() {
     threeRenderer.clear();
     
     // bring objects into world
-    if (test.Step !== undefined) {
-        test.Step();
+    if (simulator.Step !== undefined) {
+        simulator.Step();
     } 
     else {
-        testBedStep();
+        world.Step(timeStep, velocityIterations, positionIterations);
     }
-    renderer.draw();
+    particleRenderer.draw();
     threeRenderer.render(scene, camera);
     
-    stats.update();
+    // stats.update();
     requestAnimationFrame(render);
 };
 
-var ResetWorld = function() {
+function ResetWorld() {
   if (world !== null) {
     while (world.joints.length > 0) {
       world.DestroyJoint(world.joints[0]);
@@ -202,29 +200,6 @@ var ResetWorld = function() {
   camera.position.x = 0;
   camera.position.y = 0;
   camera.position.z = 100;
-};
-
-var testBedStep = function() {
-    world.Step(timeStep, velocityIterations, positionIterations);
-};
-
-function QueryCallback(point) {
-    this.point = point;
-    this.fixture = null;
-}
-QueryCallback.prototype.ReportParticle = function(system, index){
-    return false;
-}
-QueryCallback.prototype.ReportFixture = function(fixture) {
-    var body = fixture.body;
-    if (body.GetType() === b2_dynamicBody) {
-        var inside = fixture.TestPoint(this.point);
-        if (inside) {
-            this.fixture = fixture;
-            return true;
-        }
-    }
-    return false;
 };
 
 function onWindowResize() {
@@ -264,8 +239,8 @@ function touchEnd(event){
 
 function getWorldCoords(x,y) {
     var mouse = new THREE.Vector3();
-    mouse.x = (x / windowWidth) * 2 - 1;
-    mouse.y = -(y / windowHeight) * 2 + 1;
+    mouse.x = (x / window.innerWidth) * 2 - 1;
+    mouse.y = -(y / window.innerHeight) * 2 + 1;
     mouse.z = 0.5;
 
     mouse.unproject(camera);
@@ -275,3 +250,4 @@ function getWorldCoords(x,y) {
     var p = new b2Vec2(pos.x, pos.y);
     return p;
 }
+export {initAll};
