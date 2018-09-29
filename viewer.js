@@ -46821,26 +46821,26 @@ var viewer = (function (exports) {
 	var blurFragment = "#define GLSLIFY 1\nvec4 blur(sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {\n    vec4 color = vec4(0.0);\n    vec2 off1 = vec2(1.411764705882353) * direction;\n    vec2 off2 = vec2(3.2941176470588234) * direction;\n    vec2 off3 = vec2(5.176470588235294) * direction;\n    color += texture2D(image, uv) * 0.1964825501511404;\n    color += texture2D(image, uv + (off1 / resolution)) * 0.2969069646728344;\n    color += texture2D(image, uv - (off1 / resolution)) * 0.2969069646728344;\n    color += texture2D(image, uv + (off2 / resolution)) * 0.09447039785044732;\n    color += texture2D(image, uv - (off2 / resolution)) * 0.09447039785044732;\n    color += texture2D(image, uv + (off3 / resolution)) * 0.010381362401148057;\n    color += texture2D(image, uv - (off3 / resolution)) * 0.010381362401148057;\n    return color;\n}\nuniform vec2 iResolution;\nuniform vec2 direction;\nuniform sampler2D tDiffuse;\nvarying vec2 vUv;\nvoid main() {\n    gl_FragColor = blur(tDiffuse, vUv, iResolution.xy, direction);\n}";
 
 	var blurShader = {
-					uniforms: {
+							uniforms: {
 
-									"iResolution": { value: new Vector2() },
-									"direction": { value: new Vector2() },
-									"tDiffuse": { value: null }
-					},
-					vertexShader: defaultVertex,
-					fragmentShader: blurFragment
+													"iResolution": { value: new Vector2() },
+													"direction": { value: new Vector2() },
+													"tDiffuse": { value: null }
+							},
+							vertexShader: defaultVertex,
+							fragmentShader: blurFragment
 	};
 
-	var thresholdFragment = "#define GLSLIFY 1\nuniform float threshold;\nuniform sampler2D tDiffuse;\nvarying vec2 vUv;\nvoid main() {\n    vec4 color = texture2D(tDiffuse, vUv);\n    if(color.g > threshold)\n        gl_FragColor = vec4(0.26,0.76,0.96,1);\n    else\n        gl_FragColor = vec4(0.93,0.93,0.93,1);\n}";
+	var thresholdFragment = "#define GLSLIFY 1\nuniform float threshold;\nuniform sampler2D tDiffuse;\nvarying vec2 vUv;\nvoid main() {\n    vec4 color = texture2D(tDiffuse, vUv);\n    if( color.r > threshold ){\n        gl_FragColor = vec4(0.6,0.6,0.6,1.0);    }\n    else{\n        gl_FragColor = color;\n    }\n}";
 
 	var threShader = {
-		uniforms: {
-			"threshold": { value: 0.2 },
-			"tDiffuse": { value: null }
-		},
+						uniforms: {
+											"threshold": { value: 0.9 },
+											"tDiffuse": { value: null }
+						},
 
-		vertexShader: defaultVertex,
-		fragmentShader: thresholdFragment
+						vertexShader: defaultVertex,
+						fragmentShader: thresholdFragment
 	};
 
 	function WaterPass(resolution) {
@@ -46928,178 +46928,174 @@ var viewer = (function (exports) {
 	}();
 
 	var ParticleRenderer = function () {
-	        function ParticleRenderer(threeRenderer, camera, scene, world) {
-	                classCallCheck(this, ParticleRenderer);
+	    function ParticleRenderer(threeRenderer, camera, scene, world) {
+	        classCallCheck(this, ParticleRenderer);
 
-	                this.inv255 = .003921569;
-	                this.numOfBox = 3;
-	                this.textureSize = 1024;
+	        this.inv255 = .003921569;
+	        this.numOfBox = 3;
+	        this.textureSize = 1024;
 
-	                var waterScene = new Scene();
-	                // composer
-	                this.composer = new EffectComposer(threeRenderer);
-	                this.world = world;
+	        var waterScene = new Scene();
+	        // composer
+	        this.composer = new EffectComposer(threeRenderer);
+	        this.world = world;
 
-	                var renderPass = new RenderPass(waterScene, camera);
-	                var waterPass = new WaterPass(new Vector2(window.innerWidth, window.innerHeight));
-	                var copyPass = new ShaderPass(CopyShader);
-	                copyPass.renderToScreen = true;
-	                // this.colorPass = new THREE.ShaderPass();
+	        var renderPass = new RenderPass(waterScene, camera);
+	        var waterPass = new WaterPass(new Vector2(window.innerWidth, window.innerHeight));
 
-	                this.composer.addPass(renderPass);
-	                this.composer.addPass(waterPass);
-	                // this.composer.addPass(copyPass);
+	        this.composer.addPass(renderPass);
+	        this.composer.addPass(waterPass);
 
-	                // water mesh
-	                this.maxVertices = 10000;
-	                this.waterPositions = new Float32Array(this.maxVertices * 3);
-	                this.waterColors = new Float32Array(this.maxVertices * 3);
+	        // water mesh
+	        this.maxVertices = 10000;
+	        this.waterPositions = new Float32Array(this.maxVertices * 3);
+	        this.waterColors = new Float32Array(this.maxVertices * 3);
 
-	                var waterGeometry = new BufferGeometry();
-	                waterGeometry.dynamic = true;
-	                waterGeometry.addAttribute('position', new BufferAttribute(this.waterPositions, 3));
-	                waterGeometry.addAttribute('color', new BufferAttribute(this.waterColors, 3));
-	                this.waterIndex = 0;
+	        var waterGeometry = new BufferGeometry();
+	        waterGeometry.dynamic = true;
+	        waterGeometry.addAttribute('position', new BufferAttribute(this.waterPositions, 3));
+	        waterGeometry.addAttribute('color', new BufferAttribute(this.waterColors, 3));
+	        this.waterIndex = 0;
 
-	                var waterMaterial = new ShaderMaterial({
-	                        uniforms: UniformsUtils.merge([UniformsLib.points, UniformsLib.fog]),
-	                        vertexShader: waterVertex,
-	                        fragmentShader: waterFragment,
-	                        vertexColors: VertexColors
-	                });
-	                waterMaterial.uniforms.size.value = 6;
+	        var waterMaterial = new ShaderMaterial({
+	            uniforms: UniformsUtils.merge([UniformsLib.points]),
+	            vertexShader: waterVertex,
+	            fragmentShader: waterFragment,
+	            vertexColors: VertexColors
+	        });
+	        waterMaterial.uniforms.size.value = 6;
 
-	                this.waterPoints = new Points(waterGeometry, waterMaterial);
+	        this.waterPoints = new Points(waterGeometry, waterMaterial);
 
-	                // box mesh
-	                this.boxIndex = 0;
-	                this.boxPositions = new Float32Array(this.numOfBox * 6 * 3);
-	                var boxGeometry = new BufferGeometry();
-	                boxGeometry.addAttribute('position', new BufferAttribute(this.boxPositions, 3));
-	                this.boxMesh = new Mesh(boxGeometry, new MeshBasicMaterial({ color: 0x8C5C10 }));
+	        // box mesh
+	        this.boxIndex = 0;
+	        this.boxPositions = new Float32Array(this.numOfBox * 6 * 3);
+	        var boxGeometry = new BufferGeometry();
+	        boxGeometry.addAttribute('position', new BufferAttribute(this.boxPositions, 3));
+	        this.boxMesh = new Mesh(boxGeometry, new MeshBasicMaterial({ color: 0x8C5C10 }));
 
-	                // hud
-	                // this.hud = new THREE.WebGLRenderTarget( this.textureSize, this.textureSize, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat } );
-	                // let plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(4,1,1,1),new THREE.MeshBasicMaterial({color:0xffffff, map:this.composer.readBuffer.texture}) );
-	                // plane.position.set(0,1,-1);
-	                // this.plane = new THREE.Mesh(
-	                //     new THREE.PlaneBufferGeometry(2,2,1,1), 
-	                //     new THREE.ShaderMaterial( {
-	                //         uniforms: {"tex":{value:null}},
-	                //         vertexShader: document.getElementById( 'debugVS' ).textContent,
-	                //         fragmentShader: document.getElementById( 'debugFS' ).textContent
-	                //     } ));
-	                // this.plane.material.uniforms["tex"].value = this.debug.texture;
+	        // hud
+	        // this.hud = new THREE.WebGLRenderTarget( this.textureSize, this.textureSize, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat } );
+	        // let plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(4,1,1,1),new THREE.MeshBasicMaterial({color:0xffffff, map:this.composer.readBuffer.texture}) );
+	        // plane.position.set(0,1,-1);
+	        // this.plane = new THREE.Mesh(
+	        //     new THREE.PlaneBufferGeometry(2,2,1,1), 
+	        //     new THREE.ShaderMaterial( {
+	        //         uniforms: {"tex":{value:null}},
+	        //         vertexShader: document.getElementById( 'debugVS' ).textContent,
+	        //         fragmentShader: document.getElementById( 'debugFS' ).textContent
+	        //     } ));
+	        // this.plane.material.uniforms["tex"].value = this.debug.texture;
 
 
-	                scene.add(this.boxMesh);
-	                waterScene.add(this.waterPoints);
+	        scene.add(this.boxMesh);
+	        waterScene.add(this.waterPoints);
+	    }
+
+	    createClass(ParticleRenderer, [{
+	        key: 'resetBuffer',
+	        value: function resetBuffer() {
+	            for (var i = 0; i < this.maxVertices * 3; i += 3) {
+	                this.waterPositions[i] = 0;
+	                this.waterPositions[i + 1] = 0;
+	                this.waterPositions[i + 2] = 0;
+	            }
 	        }
+	    }, {
+	        key: 'draw',
+	        value: function draw() {
+	            this.waterIndex = 0;
+	            this.boxIndex = 0;
+	            this.resetBuffer();
 
-	        createClass(ParticleRenderer, [{
-	                key: 'resetBuffer',
-	                value: function resetBuffer() {
-	                        for (var i = 0; i < this.maxVertices * 3; i += 3) {
-	                                this.waterPositions[i] = 0;
-	                                this.waterPositions[i + 1] = 0;
-	                                this.waterPositions[i + 2] = 0;
-	                        }
+	            // draw particle systems
+	            for (var i = 0; i < this.world.particleSystems.length; i++) {
+	                this.drawParticleSystem(this.world.particleSystems[i]);
+	            }
+
+	            // draw box
+	            for (var i = 0, max = this.world.bodies.length; i < max; i++) {
+	                var body = this.world.bodies[i];
+	                var maxFixtures = body.fixtures.length;
+	                var transform = body.GetTransform();
+	                for (var j = 0; j < maxFixtures; j++) {
+	                    var fixture = body.fixtures[j];
+	                    fixture.shape.draw(transform);
 	                }
-	        }, {
-	                key: 'draw',
-	                value: function draw() {
-	                        this.waterIndex = 0;
-	                        this.boxIndex = 0;
-	                        this.resetBuffer();
+	            }
 
-	                        // draw particle systems
-	                        for (var i = 0; i < this.world.particleSystems.length; i++) {
-	                                this.drawParticleSystem(this.world.particleSystems[i]);
-	                        }
+	            this.waterPoints.geometry.attributes.position.needsUpdate = true;
+	            this.waterPoints.geometry.attributes.color.needsUpdate = true;
+	            this.boxMesh.geometry.attributes.position.needsUpdate = true;
 
-	                        // draw box
-	                        for (var i = 0, max = this.world.bodies.length; i < max; i++) {
-	                                var body = this.world.bodies[i];
-	                                var maxFixtures = body.fixtures.length;
-	                                var transform = body.GetTransform();
-	                                for (var j = 0; j < maxFixtures; j++) {
-	                                        var fixture = body.fixtures[j];
-	                                        fixture.shape.draw(transform);
-	                                }
-	                        }
+	            this.composer.render();
+	        }
+	    }, {
+	        key: 'insertParticleVertices',
+	        value: function insertParticleVertices(x, y, r, g, b) {
+	            var i = this.waterIndex;
+	            var threeI = i * 3;
+	            this.waterPositions[threeI] = x;
+	            this.waterPositions[threeI + 1] = y;
+	            this.waterPositions[threeI + 2] = 0;
+	            this.waterColors[threeI] = r;
+	            this.waterColors[threeI + 1] = g;
+	            this.waterColors[threeI + 2] = b;
 
-	                        this.waterPoints.geometry.attributes.position.needsUpdate = true;
-	                        this.waterPoints.geometry.attributes.color.needsUpdate = true;
-	                        this.boxMesh.geometry.attributes.position.needsUpdate = true;
+	            this.waterIndex++;
+	        }
+	    }, {
+	        key: 'insertTriangle',
+	        value: function insertTriangle(x1, y1, x2, y2, x3, y3) {
+	            var i = this.boxIndex;
+	            var threeI = i * 3;
+	            this.boxPositions[threeI] = x1;
+	            this.boxPositions[threeI + 1] = y1;
+	            this.boxPositions[threeI + 2] = 0;
 
-	                        this.composer.render();
-	                }
-	        }, {
-	                key: 'insertParticleVertices',
-	                value: function insertParticleVertices(x, y, r, g, b) {
-	                        var i = this.waterIndex;
-	                        var threeI = i * 3;
-	                        this.waterPositions[threeI] = x;
-	                        this.waterPositions[threeI + 1] = y;
-	                        this.waterPositions[threeI + 2] = 0;
-	                        this.waterColors[threeI] = r;
-	                        this.waterColors[threeI + 1] = g;
-	                        this.waterColors[threeI + 2] = b;
+	            i++;
+	            threeI = i * 3;
+	            this.boxPositions[threeI] = x2;
+	            this.boxPositions[threeI + 1] = y2;
+	            this.boxPositions[threeI + 2] = 0;
 
-	                        this.waterIndex++;
-	                }
-	        }, {
-	                key: 'insertTriangle',
-	                value: function insertTriangle(x1, y1, x2, y2, x3, y3) {
-	                        var i = this.boxIndex;
-	                        var threeI = i * 3;
-	                        this.boxPositions[threeI] = x1;
-	                        this.boxPositions[threeI + 1] = y1;
-	                        this.boxPositions[threeI + 2] = 0;
+	            i++;
+	            threeI = i * 3;
+	            this.boxPositions[threeI] = x3;
+	            this.boxPositions[threeI + 1] = y3;
+	            this.boxPositions[threeI + 2] = 0;
+	            this.boxIndex += 3;
+	        }
+	    }, {
+	        key: 'transformAndInsert',
+	        value: function transformAndInsert(v1, v2, v3, transform) {
+	            var transformedV1 = new b2Vec2();
+	            var transformedV2 = new b2Vec2();
+	            var transformedV3 = new b2Vec2();
 
-	                        i++;
-	                        threeI = i * 3;
-	                        this.boxPositions[threeI] = x2;
-	                        this.boxPositions[threeI + 1] = y2;
-	                        this.boxPositions[threeI + 2] = 0;
+	            b2Vec2.Mul(transformedV1, transform, v1);
+	            b2Vec2.Mul(transformedV2, transform, v2);
+	            b2Vec2.Mul(transformedV3, transform, v3);
+	            this.insertTriangle(transformedV1.x, transformedV1.y, transformedV2.x, transformedV2.y, transformedV3.x, transformedV3.y);
+	        }
+	    }, {
+	        key: 'transformVerticesAndInsert',
+	        value: function transformVerticesAndInsert(vertices, transform) {
+	            this.transformAndInsert(vertices[0], vertices[1], vertices[2], transform);
+	            this.transformAndInsert(vertices[0], vertices[2], vertices[3], transform);
+	        }
+	    }, {
+	        key: 'drawParticleSystem',
+	        value: function drawParticleSystem(system) {
+	            var particles = system.GetPositionBuffer();
+	            var color = system.GetColorBuffer();
 
-	                        i++;
-	                        threeI = i * 3;
-	                        this.boxPositions[threeI] = x3;
-	                        this.boxPositions[threeI + 1] = y3;
-	                        this.boxPositions[threeI + 2] = 0;
-	                        this.boxIndex += 3;
-	                }
-	        }, {
-	                key: 'transformAndInsert',
-	                value: function transformAndInsert(v1, v2, v3, transform) {
-	                        var transformedV1 = new b2Vec2();
-	                        var transformedV2 = new b2Vec2();
-	                        var transformedV3 = new b2Vec2();
-
-	                        b2Vec2.Mul(transformedV1, transform, v1);
-	                        b2Vec2.Mul(transformedV2, transform, v2);
-	                        b2Vec2.Mul(transformedV3, transform, v3);
-	                        this.insertTriangle(transformedV1.x, transformedV1.y, transformedV2.x, transformedV2.y, transformedV3.x, transformedV3.y);
-	                }
-	        }, {
-	                key: 'transformVerticesAndInsert',
-	                value: function transformVerticesAndInsert(vertices, transform) {
-	                        this.transformAndInsert(vertices[0], vertices[1], vertices[2], transform);
-	                        this.transformAndInsert(vertices[0], vertices[2], vertices[3], transform);
-	                }
-	        }, {
-	                key: 'drawParticleSystem',
-	                value: function drawParticleSystem(system) {
-	                        var particles = system.GetPositionBuffer();
-	                        var color = system.GetColorBuffer();
-
-	                        for (var i = 0, c = 0; i < particles.length; i += 2, c += 4) {
-	                                this.insertParticleVertices(particles[i], particles[i + 1], color[c] * this.inv255, color[c + 1] * this.inv255, color[c + 2] * this.inv255);
-	                        }
-	                }
-	        }]);
-	        return ParticleRenderer;
+	            for (var i = 0, c = 0; i < particles.length; i += 2, c += 4) {
+	                this.insertParticleVertices(particles[i], particles[i + 1], color[c] * this.inv255, color[c + 1] * this.inv255, color[c + 2] * this.inv255);
+	            }
+	        }
+	    }]);
+	    return ParticleRenderer;
 	}();
 
 	var MouseQueryCallback = function () {
@@ -47165,111 +47161,112 @@ var viewer = (function (exports) {
 	}();
 
 	var WaterSim = function () {
-	        function WaterSim(camera) {
-	                classCallCheck(this, WaterSim);
+	    function WaterSim(camera) {
+	        classCallCheck(this, WaterSim);
 
-	                camera.position.y = 1;
-	                camera.position.z = 5;
+	        camera.position.y = 1;
+	        camera.position.z = 5;
 
-	                var bodyDefine = new b2BodyDef();
-	                var ground = world.CreateBody(bodyDefine);
+	        var bodyDefine = new b2BodyDef();
+	        var ground = world.CreateBody(bodyDefine);
 
-	                bodyDefine.type = b2_dynamicBody;
-	                bodyDefine.allowSleep = false;
-	                bodyDefine.position.Set(0, 0);
-	                var body = world.CreateBody(bodyDefine);
+	        bodyDefine.type = b2_dynamicBody;
+	        bodyDefine.allowSleep = false;
+	        bodyDefine.position.Set(0, 0);
+	        var body = world.CreateBody(bodyDefine);
 
-	                var b1 = new b2PolygonShape();
-	                b1.SetAsBoxXYCenterAngle(0.05, 0.5, new b2Vec2(2, 0.5), 0);
-	                body.CreateFixtureFromShape(b1, 5);
+	        var b1 = new b2PolygonShape();
+	        b1.SetAsBoxXYCenterAngle(0.05, 0.5, new b2Vec2(2, 0.5), 0);
+	        body.CreateFixtureFromShape(b1, 5);
 
-	                var b2 = new b2PolygonShape();
-	                b2.SetAsBoxXYCenterAngle(0.05, 0.5, new b2Vec2(-2, 0.5), 0);
-	                body.CreateFixtureFromShape(b2, 5);
+	        var b2 = new b2PolygonShape();
+	        b2.SetAsBoxXYCenterAngle(0.05, 0.5, new b2Vec2(-2, 0.5), 0);
+	        body.CreateFixtureFromShape(b2, 5);
 
-	                var b3 = new b2PolygonShape();
-	                b3.SetAsBoxXYCenterAngle(2, 0.05, new b2Vec2(0, 0), 0);
-	                body.CreateFixtureFromShape(b3, 5);
+	        var b3 = new b2PolygonShape();
+	        b3.SetAsBoxXYCenterAngle(2, 0.05, new b2Vec2(0, 0), 0);
+	        body.CreateFixtureFromShape(b3, 5);
 
-	                var jd = new b2RevoluteJointDef();
-	                this.joint = jd.InitializeAndCreate(ground, body, new b2Vec2(0, 1));
+	        var jd = new b2RevoluteJointDef();
+	        this.joint = jd.InitializeAndCreate(ground, body, new b2Vec2(0, 1));
 
-	                this.bottomShape = new b2PolygonShape();
-	                this.bottomShape.SetAsBoxXYCenterAngle(10, 1, new b2Vec2(0, -5), 0);
+	        this.bottomShape = new b2PolygonShape();
+	        this.bottomShape.SetAsBoxXYCenterAngle(10, 1, new b2Vec2(0, -5), 0);
 
-	                // setup particles
-	                var psd = new b2ParticleSystemDef();
-	                psd.radius = 0.025;
-	                psd.dampingStrength = 0.2;
-	                this.particleSystem = world.CreateParticleSystem(psd);
+	        // setup particles
+	        var psd = new b2ParticleSystemDef();
+	        psd.radius = 0.025;
+	        psd.dampingStrength = 0.2;
+	        this.particleSystem = world.CreateParticleSystem(psd);
 
-	                this.produceInterval = 1000;
-	                this.lastTimeStamp = 0;
-	                this.waterColor = new b2ParticleColor(0xff, 0xff, 0xff, 0xff);
+	        this.produceInterval = 1000;
+	        this.lastTimeStamp = 0;
+	        this.waterColor = new b2ParticleColor(0x42, 0x86, 0xf4, 0xff);
+	        // this.waterColor = new b2ParticleColor(0xff, 0xff, 0xff, 0xff);
+	    }
+
+	    createClass(WaterSim, [{
+	        key: 'Step',
+	        value: function Step() {
+	            var now = new Date().getTime();
+	            if (now - this.lastTimeStamp > this.produceInterval) {
+	                this.createDrop();
+	                this.lastTimeStamp = now;
+	            }
+
+	            var xf = new b2Transform();
+	            xf.SetIdentity();
+	            this.particleSystem.DestroyParticlesInShape(this.bottomShape, xf);
+
+	            // splash water
+	            if (mouseTracing && mouseJoint === null) {
+	                var delay = 0.1;
+	                var acceleration = new b2Vec2();
+	                var temp = new b2Vec2();
+	                // acceleration = 2 / delay * (1 / delay * (m_mouseWorld - m_mouseTracerPosition) - m_mouseTracerVelocity);
+	                b2Vec2.Sub(acceleration, mouseWorldPos, mouseTracerPos);
+	                b2Vec2.MulScalar(acceleration, acceleration, 1 / delay);
+	                b2Vec2.Sub(acceleration, acceleration, mouseTracerVel);
+	                b2Vec2.MulScalar(acceleration, acceleration, 2 / delay);
+
+	                // velocity
+	                b2Vec2.MulScalar(acceleration, acceleration, timeStep);
+	                b2Vec2.Add(mouseTracerVel, mouseTracerVel, acceleration);
+	                // position
+	                b2Vec2.MulScalar(temp, mouseTracerVel, timeStep);
+	                b2Vec2.Add(mouseTracerPos, mouseTracerPos, temp);
+
+	                // compute aabb
+	                var shape = new b2CircleShape();
+	                shape.position = mouseTracerPos;
+	                shape.radius = 0.1;
+	                var aabb = new b2AABB();
+	                var _xf = new b2Transform();
+	                _xf.SetIdentity();
+	                shape.ComputeAABB(aabb, _xf);
+
+	                // query aabb
+	                var waterCallback = new WaterQueryCallback(this.particleSystem, shape, mouseTracerVel);
+	                world.QueryAABB(waterCallback, aabb);
+	            }
+	            world.Step(timeStep, velocityIterations, positionIterations);
 	        }
+	    }, {
+	        key: 'createDrop',
+	        value: function createDrop() {
+	            var circle = new b2CircleShape();
+	            circle.position = new b2Vec2(1.5, 5);
+	            circle.radius = 0.2;
+	            var pd = new b2ParticleGroupDef();
+	            pd.shape = circle;
+	            // pd.flags = 0;
+	            // pd.groupFlags = 0;
+	            pd.color = this.waterColor;
 
-	        createClass(WaterSim, [{
-	                key: 'Step',
-	                value: function Step() {
-	                        var now = new Date().getTime();
-	                        if (now - this.lastTimeStamp > this.produceInterval) {
-	                                this.createDrop();
-	                                this.lastTimeStamp = now;
-	                        }
-
-	                        var xf = new b2Transform();
-	                        xf.SetIdentity();
-	                        this.particleSystem.DestroyParticlesInShape(this.bottomShape, xf);
-
-	                        // splash water
-	                        if (mouseTracing && mouseJoint === null) {
-	                                var delay = 0.1;
-	                                var acceleration = new b2Vec2();
-	                                var temp = new b2Vec2();
-	                                // acceleration = 2 / delay * (1 / delay * (m_mouseWorld - m_mouseTracerPosition) - m_mouseTracerVelocity);
-	                                b2Vec2.Sub(acceleration, mouseWorldPos, mouseTracerPos);
-	                                b2Vec2.MulScalar(acceleration, acceleration, 1 / delay);
-	                                b2Vec2.Sub(acceleration, acceleration, mouseTracerVel);
-	                                b2Vec2.MulScalar(acceleration, acceleration, 2 / delay);
-
-	                                // velocity
-	                                b2Vec2.MulScalar(acceleration, acceleration, timeStep);
-	                                b2Vec2.Add(mouseTracerVel, mouseTracerVel, acceleration);
-	                                // position
-	                                b2Vec2.MulScalar(temp, mouseTracerVel, timeStep);
-	                                b2Vec2.Add(mouseTracerPos, mouseTracerPos, temp);
-
-	                                // compute aabb
-	                                var shape = new b2CircleShape();
-	                                shape.position = mouseTracerPos;
-	                                shape.radius = 0.1;
-	                                var aabb = new b2AABB();
-	                                var _xf = new b2Transform();
-	                                _xf.SetIdentity();
-	                                shape.ComputeAABB(aabb, _xf);
-
-	                                // query aabb
-	                                var waterCallback = new WaterQueryCallback(this.particleSystem, shape, mouseTracerVel);
-	                                world.QueryAABB(waterCallback, aabb);
-	                        }
-	                        world.Step(timeStep, velocityIterations, positionIterations);
-	                }
-	        }, {
-	                key: 'createDrop',
-	                value: function createDrop() {
-	                        var circle = new b2CircleShape();
-	                        circle.position = new b2Vec2(1.5, 5);
-	                        circle.radius = 0.2;
-	                        var pd = new b2ParticleGroupDef();
-	                        pd.shape = circle;
-	                        pd.flags = 0;
-	                        pd.groupFlags = 0;
-	                        pd.color = this.waterColor;
-
-	                        this.particleSystem.CreateParticleGroup(pd);
-	                }
-	        }]);
-	        return WaterSim;
+	            this.particleSystem.CreateParticleGroup(pd);
+	        }
+	    }]);
+	    return WaterSim;
 	}();
 
 	// shouldnt be a global :(
@@ -47316,7 +47313,7 @@ var viewer = (function (exports) {
 	        return;
 	    }
 
-	    threeRenderer.setClearColor(0x000000);
+	    threeRenderer.setClearColor(0xffffff);
 	    threeRenderer.setSize(window.innerWidth, window.innerHeight);
 	    threeRenderer.autoClear = false;
 

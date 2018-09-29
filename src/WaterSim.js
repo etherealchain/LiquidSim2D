@@ -38,7 +38,8 @@ class WaterSim {
 
         this.produceInterval = 1000;
         this.lastTimeStamp = 0;
-        this.waterColor = new b2ParticleColor(0xff, 0xff, 0xff, 0xff);
+        this.waterColor = new b2ParticleColor(0x42, 0x86, 0xf4, 0xff);
+        // this.waterColor = new b2ParticleColor(0xff, 0xff, 0xff, 0xff);
     }
     Step(){
         let now = new Date().getTime();
@@ -90,8 +91,8 @@ class WaterSim {
         circle.radius = 0.2;
         let pd = new b2ParticleGroupDef;
         pd.shape = circle;
-        pd.flags = 0;
-        pd.groupFlags = 0;
+        // pd.flags = 0;
+        // pd.groupFlags = 0;
         pd.color = this.waterColor;
 
         this.particleSystem.CreateParticleGroup(pd);

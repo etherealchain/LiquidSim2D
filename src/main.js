@@ -57,7 +57,7 @@ function initAll() {
         return;
     }
 
-    threeRenderer.setClearColor(0x000000);
+    threeRenderer.setClearColor(0xffffff);
     threeRenderer.setSize(window.innerWidth, window.innerHeight);
     threeRenderer.autoClear = false;
 

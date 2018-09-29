@@ -2,8 +2,6 @@ import * as THREE from 'three';
 import EffectComposer from './lib/EffectComposer';
 import RenderPass from './lib/RenderPass';
 import WaterPass from './WaterPass';
-import ShaderPass from './lib/ShaderPass';
-import CopyShader from './lib/CopyShader';
 import waterVertex from './shader/waterVertex.glsl';
 import waterFragment from './shader/waterFragment.glsl';
 
@@ -20,13 +18,9 @@ class ParticleRenderer{
         
         let renderPass = new RenderPass(waterScene, camera);
         let waterPass = new WaterPass(new THREE.Vector2(window.innerWidth,window.innerHeight));
-        let copyPass = new ShaderPass(CopyShader);
-        copyPass.renderToScreen = true;
-        // this.colorPass = new THREE.ShaderPass();
 
         this.composer.addPass(renderPass);
         this.composer.addPass(waterPass);
-        // this.composer.addPass(copyPass);
 
         // water mesh
         this.maxVertices = 10000;
@@ -41,8 +35,7 @@ class ParticleRenderer{
 
         let waterMaterial = new THREE.ShaderMaterial({
             uniforms: THREE.UniformsUtils.merge( [
-                THREE.UniformsLib.points,
-                THREE.UniformsLib.fog
+                THREE.UniformsLib.points
             ] ),
             vertexShader: waterVertex,
             fragmentShader: waterFragment,
@@ -162,7 +155,11 @@ class ParticleRenderer{
         let color = system.GetColorBuffer();
 
         for (let i = 0, c = 0; i < particles.length; i += 2, c += 4) {
-            this.insertParticleVertices(particles[i],particles[i + 1], color[c]*this.inv255, color[c+1]*this.inv255, color[c+2]*this.inv255);
+            this.insertParticleVertices(particles[i],
+                                        particles[i + 1], 
+                                        color[c]*this.inv255, 
+                                        color[c+1]*this.inv255, 
+                                        color[c+2]*this.inv255);
         }
     }
 }
