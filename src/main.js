@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 // import Stats from 'stats.js';
 import ParticleRenderer from './ParticleRenderer';
+import BackGroundRenderer from './BackGroudRenderer';
 import MouseQueryCallback from './MouseQueryCallback';
 import WaterSim from './WaterSim';
 
@@ -19,6 +20,7 @@ var particleColors = [
 
 var threeRenderer;
 var particleRenderer;
+var backGroundRenderer;
 var camera;
 var scene;
 var simulator;
@@ -60,14 +62,16 @@ function initAll() {
     threeRenderer.setClearColor(0xffffff);
     threeRenderer.setSize(window.innerWidth, window.innerHeight);
     threeRenderer.autoClear = false;
+    document.body.appendChild( threeRenderer.domElement);
 
     camera.position.x = 0;
     camera.position.y = 0;
     camera.position.z = 100;
+    
+    backGroundRenderer = new BackGroundRenderer(threeRenderer, new THREE.Vector2(window.innerWidth, window.innerHeight));
     scene = new THREE.Scene();
+    scene.background = backGroundRenderer.renderTarget.texture;
     camera.lookAt(scene.position);
-
-    document.body.appendChild( threeRenderer.domElement);
 
     // hack
     var gravity = new b2Vec2(0, -10);
@@ -176,8 +180,9 @@ function render() {
     else {
         world.Step(timeStep, velocityIterations, positionIterations);
     }
-    particleRenderer.draw();
+    backGroundRenderer.render();
     threeRenderer.render(scene, camera);
+    particleRenderer.draw();
     
     // stats.update();
     requestAnimationFrame(render);

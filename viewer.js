@@ -46831,7 +46831,7 @@ var viewer = (function (exports) {
 							fragmentShader: blurFragment
 	};
 
-	var thresholdFragment = "#define GLSLIFY 1\nuniform float threshold;\nuniform sampler2D tDiffuse;\nvarying vec2 vUv;\nvoid main() {\n    vec4 color = texture2D(tDiffuse, vUv);\n    if( color.r > threshold ){\n        gl_FragColor = vec4(0.6,0.6,0.6,1.0);    }\n    else{\n        gl_FragColor = color;\n    }\n}";
+	var thresholdFragment = "#define GLSLIFY 1\nuniform float threshold;\nuniform sampler2D tDiffuse;\nvarying vec2 vUv;\nvoid main() {\n    vec4 color = texture2D(tDiffuse, vUv);\n    if( color.r > threshold ){\n        discard;\n    }\n    else{\n        gl_FragColor = color;\n    }\n}";
 
 	var threShader = {
 						uniforms: {
@@ -46972,7 +46972,7 @@ var viewer = (function (exports) {
 	        this.boxPositions = new Float32Array(this.numOfBox * 6 * 3);
 	        var boxGeometry = new BufferGeometry();
 	        boxGeometry.addAttribute('position', new BufferAttribute(this.boxPositions, 3));
-	        this.boxMesh = new Mesh(boxGeometry, new MeshBasicMaterial({ color: 0x8C5C10 }));
+	        this.boxMesh = new Mesh(boxGeometry, new MeshBasicMaterial({ color: 0xc1c1c1 }));
 
 	        // hud
 	        // this.hud = new THREE.WebGLRenderTarget( this.textureSize, this.textureSize, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat } );
@@ -47098,6 +47098,57 @@ var viewer = (function (exports) {
 	    return ParticleRenderer;
 	}();
 
+	var babkGroundFragment = "#define GLSLIFY 1\nuniform vec2 u_resolution;\nuniform float u_time;\nuniform vec3 intervalColor;\nuniform vec3 brickColor;\nvec2 brickTile(vec2 _st, float _zoom){\n    _st *= _zoom;\n    float velocity = 0.0005;\n    _st += vec2(velocity*u_time);\n    _st.x += step(1., mod(_st.y,2.0)) * 0.45;\n    return fract(_st);\n}\nvec3 box(vec2 _st, vec2 _size){\n    _size = vec2(0.5)-_size*0.5;\n    vec2 uv = smoothstep(_size, _size+vec2(1e-4), _st);\n    uv *= smoothstep(_size, _size+vec2(1e-4), vec2(1.0)-_st);\n    float alpha = uv.x*uv.y;\n    return mix(intervalColor, brickColor, alpha);\n}\nvoid main(void){\n    vec2 st;\n    if(u_resolution.x > u_resolution.y){\n        st = gl_FragCoord.xy/u_resolution.yy;\n    }\n    else{\n        st = gl_FragCoord.xy/u_resolution.xx;\n    }\n    st /= vec2(1.5,0.65);\n    st = brickTile(st,15.0);\n    vec3 color = box(st,vec2(0.9));\n    gl_FragColor = vec4(color,1.0);\n}";
+
+	var backGroundShader = {
+
+					uniforms: {
+									"u_resolution": { value: new Vector2() },
+									"u_time": { value: 0.0 },
+									"intervalColor": { value: new Vector3(0.298, 0.0745, 0.0745) },
+									"brickColor": { value: new Vector3(0.749, 0.066667, 0.04313) }
+					},
+					vertexShader: defaultVertex,
+					fragmentShader: babkGroundFragment
+	};
+
+	var BackGroudRenderer = function () {
+	    function BackGroudRenderer(threeRenderer, resolution) {
+	        classCallCheck(this, BackGroudRenderer);
+
+
+	        var pars = { minFilter: LinearFilter, magFilter: LinearFilter, format: RGBAFormat };
+	        this.resolution = resolution;
+	        this.renderTarget = new WebGLRenderTarget(resolution.x, resolution.y, pars);
+	        this.renderTarget.texture.generateMipmaps = false;
+
+	        this.backGroundMaterial = new ShaderMaterial({
+	            uniforms: backGroundShader.uniforms,
+	            vertexShader: backGroundShader.vertexShader,
+	            fragmentShader: backGroundShader.fragmentShader
+	        });
+
+	        this.renderer = threeRenderer;
+	        this.scene = new Scene();
+	        this.camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+	        this.quad = new Mesh(new PlaneBufferGeometry(2, 2), this.backGroundMaterial);
+	        this.quad.position.set(0, 0, -1);
+	        this.quad.frustumCulled = false; // Avoid getting clipped
+	        this.scene.add(this.quad);
+	    }
+
+	    createClass(BackGroudRenderer, [{
+	        key: 'render',
+	        value: function render() {
+	            this.backGroundMaterial.uniforms["u_resolution"].value = this.resolution;
+	            this.backGroundMaterial.uniforms["u_time"].value = performance.now();
+	            this.renderer.render(this.scene, this.camera, this.renderTarget, true);
+	        }
+	    }]);
+	    return BackGroudRenderer;
+	}();
+
 	var MouseQueryCallback = function () {
 	    function MouseQueryCallback(point) {
 	        classCallCheck(this, MouseQueryCallback);
@@ -47176,15 +47227,15 @@ var viewer = (function (exports) {
 	        var body = world.CreateBody(bodyDefine);
 
 	        var b1 = new b2PolygonShape();
-	        b1.SetAsBoxXYCenterAngle(0.05, 0.5, new b2Vec2(2, 0.5), 0);
+	        b1.SetAsBoxXYCenterAngle(0.1, 0.5, new b2Vec2(2, 0.4), 0);
 	        body.CreateFixtureFromShape(b1, 5);
 
 	        var b2 = new b2PolygonShape();
-	        b2.SetAsBoxXYCenterAngle(0.05, 0.5, new b2Vec2(-2, 0.5), 0);
+	        b2.SetAsBoxXYCenterAngle(0.1, 0.5, new b2Vec2(-2, 0.4), 0);
 	        body.CreateFixtureFromShape(b2, 5);
 
 	        var b3 = new b2PolygonShape();
-	        b3.SetAsBoxXYCenterAngle(2, 0.05, new b2Vec2(0, 0), 0);
+	        b3.SetAsBoxXYCenterAngle(2, 0.1, new b2Vec2(0, 0), 0);
 	        body.CreateFixtureFromShape(b3, 5);
 
 	        var jd = new b2RevoluteJointDef();
@@ -47282,6 +47333,7 @@ var viewer = (function (exports) {
 
 	var threeRenderer;
 	var particleRenderer;
+	var backGroundRenderer;
 	var camera;
 	var scene;
 	var simulator;
@@ -47316,14 +47368,16 @@ var viewer = (function (exports) {
 	    threeRenderer.setClearColor(0xffffff);
 	    threeRenderer.setSize(window.innerWidth, window.innerHeight);
 	    threeRenderer.autoClear = false;
+	    document.body.appendChild(threeRenderer.domElement);
 
 	    camera.position.x = 0;
 	    camera.position.y = 0;
 	    camera.position.z = 100;
-	    scene = new Scene();
-	    camera.lookAt(scene.position);
 
-	    document.body.appendChild(threeRenderer.domElement);
+	    backGroundRenderer = new BackGroudRenderer(threeRenderer, new Vector2(window.innerWidth, window.innerHeight));
+	    scene = new Scene();
+	    scene.background = backGroundRenderer.renderTarget.texture;
+	    camera.lookAt(scene.position);
 
 	    // hack
 	    var gravity = new b2Vec2(0, -10);
@@ -47426,8 +47480,9 @@ var viewer = (function (exports) {
 	    } else {
 	        world.Step(timeStep, velocityIterations, positionIterations);
 	    }
-	    particleRenderer.draw();
+	    backGroundRenderer.render();
 	    threeRenderer.render(scene, camera);
+	    particleRenderer.draw();
 
 	    // stats.update();
 	    requestAnimationFrame(render);

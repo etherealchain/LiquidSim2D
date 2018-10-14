@@ -50,7 +50,7 @@ class ParticleRenderer{
         this.boxPositions = new Float32Array(this.numOfBox*6*3);
         var boxGeometry = new THREE.BufferGeometry();
         boxGeometry.addAttribute('position', new THREE.BufferAttribute( this.boxPositions, 3 ));
-        this.boxMesh = new THREE.Mesh(boxGeometry, new THREE.MeshBasicMaterial( { color: 0x8C5C10 } ));
+        this.boxMesh = new THREE.Mesh(boxGeometry, new THREE.MeshBasicMaterial( { color: 0xc1c1c1 } ));
 
         // hud
         // this.hud = new THREE.WebGLRenderTarget( this.textureSize, this.textureSize, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat } );

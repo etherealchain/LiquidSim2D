@@ -13,15 +13,15 @@ class WaterSim {
         var body = world.CreateBody(bodyDefine);
 
         var b1 = new b2PolygonShape();
-        b1.SetAsBoxXYCenterAngle(0.05, 0.5, new b2Vec2(2, 0.5), 0);
+        b1.SetAsBoxXYCenterAngle(0.1, 0.5, new b2Vec2(2, 0.4), 0);
         body.CreateFixtureFromShape(b1, 5);
 
         var b2 = new b2PolygonShape();
-        b2.SetAsBoxXYCenterAngle(0.05, 0.5, new b2Vec2(-2, 0.5), 0);
+        b2.SetAsBoxXYCenterAngle(0.1, 0.5, new b2Vec2(-2, 0.4), 0);
         body.CreateFixtureFromShape(b2, 5);
 
         var b3 = new b2PolygonShape();
-        b3.SetAsBoxXYCenterAngle(2, 0.05, new b2Vec2(0, 0), 0);
+        b3.SetAsBoxXYCenterAngle(2, 0.1, new b2Vec2(0, 0), 0);
         body.CreateFixtureFromShape(b3, 5);
 
         var jd = new b2RevoluteJointDef();
